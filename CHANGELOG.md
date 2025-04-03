@@ -1,3 +1,6 @@
+# 0.1.2 Changelog
+- Fixed the package name.
+
 # 0.1.1 Changelog
 - Fixed project cannot be built due to incorrect setting of the assembly definition
 
