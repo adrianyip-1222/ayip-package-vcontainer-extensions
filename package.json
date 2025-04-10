@@ -8,6 +8,7 @@
   "changelogUrl": "https://github.com/adrianyip-1222/ayip-package-vcontainer-extensions/blob/0.1.2/CHANGELOG.md",
   "licensesUrl": "https://github.com/adrianyip-1222/ayip-package-vcontainer-extensions/blob/0.1.2/LICENSE",
   "dependencies": {
+    "com.adrianyip.foundation": "0.2.2",
     "jp.hadashikick.vcontainer": "1.16.8"
   },
   "keywords": [
