@@ -2,6 +2,7 @@
     "name": "AYip.VContainer.Editor",
     "rootNamespace": "",
     "references": [
+        "AYip.Foundation",
         "VContainer"
     ],
     "includePlatforms": [
