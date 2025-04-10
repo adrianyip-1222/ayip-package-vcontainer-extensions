@@ -22,25 +22,48 @@ namespace AYip.VContainers.Editor
         {
             var stopWatch = new Stopwatch();
             stopWatch.Start();
-            var monoBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             
             // Step 1: Find all active lifetime scopes in the scene
-            var lifetimeScopes = monoBehaviours
+            var monoBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var scopes = monoBehaviours
                 .Where (mb => mb is LifetimeScope { isActiveAndEnabled: true })
                 .Cast<LifetimeScope>()
                 .ToArray();
 
-            if (lifetimeScopes.Length == 0)
+            if (scopes.Length == 0)
                 throw new InvalidRegistrationException("No LifetimeScope found in the scene.", stopWatch.Elapsed);
-
+            
             // Step 2: Build containers for all LifetimeScopes
             // Build the scope will handle the registration as well as the parent-child relationship.
             // It will validate all registrations and the gameObjects on the auto-injected list.
-            foreach (var scope in lifetimeScopes)
-                scope.Build();
+            var lifetimeScopeType = typeof(LifetimeScope);
+            var waitingListFieldInfo = lifetimeScopeType.GetField("WaitingList", BindingFlags.Static | BindingFlags.NonPublic);
+            var enqueueAwakeMethod = lifetimeScopeType.GetMethod("EnqueueAwake", BindingFlags.Static | BindingFlags.NonPublic);
+            var parentPropertyInfo = lifetimeScopeType.GetProperty("Parent", BindingFlags.Instance | BindingFlags.Public);
+            
+            if (waitingListFieldInfo == null || enqueueAwakeMethod == null || parentPropertyInfo == null)
+                throw new InvalidRegistrationException("The WaitingList field, EnqueueAwake method or Parent property was not found. VContainer might have changed their code.", stopWatch.Elapsed);
+            
+            var waitingList = waitingListFieldInfo.GetValue(null) as List<LifetimeScope>;
 
+            foreach (var scope in scopes)
+            {
+                // Mocking the awake function of a lifetime scope.
+                try
+                {
+                    scope.Build();
+                }
+                catch (VContainerParentTypeReferenceNotFound) when(!scope.IsRoot)
+                {
+                    if (waitingList.Contains(scope))
+                        throw;
+                    
+                    enqueueAwakeMethod.Invoke(null, new object[] { scope });
+                }
+            }
+            
             // Step 3: Finding any gameObjects that injects dependencies but not registered in the auto-injected list.
-            var autoInjectGameObjectsFieldInfo = typeof(LifetimeScope).GetField("autoInjectGameObjects", BindingFlags.Instance | BindingFlags.NonPublic);
+            var autoInjectGameObjectsFieldInfo = lifetimeScopeType.GetField("autoInjectGameObjects", BindingFlags.Instance | BindingFlags.NonPublic);
             if (autoInjectGameObjectsFieldInfo == null)
                 throw new InvalidRegistrationException("The autoInjectGameObjects field was not found. VContainer might have changed their code.", stopWatch.Elapsed);
 
@@ -54,7 +77,7 @@ namespace AYip.VContainers.Editor
                 .Distinct();
             
             // The list of auto-injected GameObjects on all lifetime scope.
-            var registry = lifetimeScopes.SelectMany(scope => autoInjectGameObjectsFieldInfo.GetValue(scope) as List<GameObject>).Distinct();
+            var registry = scopes.SelectMany(scope => autoInjectGameObjectsFieldInfo.GetValue(scope) as List<GameObject>).Distinct();
             
             var missingGameObjects = candidates
                 .Where(candidate => !registry
@@ -68,7 +91,13 @@ namespace AYip.VContainers.Editor
             
             if (missingGameObjects.Length > 0)
                 throw new AutoInjectionGameObjectMissingException(missingGameObjects, stopWatch.Elapsed);   
-
+            
+            // Step 4: Reset the runtime reference of parent to null.
+            foreach (var scope in scopes)
+                parentPropertyInfo.SetValue(scope, null);
+            
+            waitingListFieldInfo.SetValue(null, null);
+            
             stopWatch.Stop();
             Debug.Log($"VContainer validation completed successfully. ({stopWatch.Elapsed.TotalSeconds} seconds)");
         }
