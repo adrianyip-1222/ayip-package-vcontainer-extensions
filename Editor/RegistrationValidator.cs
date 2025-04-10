@@ -105,7 +105,7 @@ namespace AYip.VContainers.Editor
         /// <summary>
         /// Press alt(option) + shift + R to validate the scene and play the editor.
         /// </summary>
-        [MenuItem("Tools/VContainer/Validate and Play &#R")]
+        [MenuItem("Tools/VContainer/Validate and Play &#C")]
         public static void ValidateAndPlay()
         {
             ValidateScene();
