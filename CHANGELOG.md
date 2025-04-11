@@ -1,4 +1,8 @@
 # Changelog
+## 0.1.4
+- Prevent validation from running in play mode
+- Fixed validation not working when it has thrown exceptions during validation or the waiting list has been null.
+
 ## 0.1.3
 - Fixed the registration validator not working with parent relationship setup on lifetime scope
 - Changed the hotkey of `Validate and Play` to `Alt + Shift + C`
