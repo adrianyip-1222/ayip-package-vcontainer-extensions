@@ -20,6 +20,12 @@ namespace AYip.VContainers.Editor
         [MenuItem("Tools/VContainer/Validate Scene &#V")]
         public static void ValidateScene()
         {
+            if (EditorApplication.isPlaying)
+            {
+                Debug.LogWarning("Validating the scene only works when the editor is not running.");
+                return;
+            }
+            
             var stopWatch = new Stopwatch();
             stopWatch.Start();
             
@@ -108,6 +114,12 @@ namespace AYip.VContainers.Editor
         [MenuItem("Tools/VContainer/Validate and Play &#C")]
         public static void ValidateAndPlay()
         {
+            if (EditorApplication.isPlaying)
+            {
+                Debug.LogWarning("Validating the scene only works when the editor is not running.");
+                return;
+            }
+            
             ValidateScene();
             EditorApplication.isPlaying = true;
         }
