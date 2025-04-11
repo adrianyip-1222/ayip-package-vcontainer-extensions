@@ -50,6 +50,10 @@ namespace AYip.VContainers.Editor
             if (waitingListFieldInfo == null || enqueueAwakeMethod == null || parentPropertyInfo == null)
                 throw new InvalidRegistrationException("The WaitingList field, EnqueueAwake method or Parent property was not found. VContainer might have changed their code.", stopWatch.Elapsed);
             
+            // Initialize the waiting list to make sure it's not null.
+            waitingListFieldInfo.SetValue(null, new List<LifetimeScope>());
+            
+            // Get the waiting list instance for later use.
             var waitingList = waitingListFieldInfo.GetValue(null) as List<LifetimeScope>;
 
             foreach (var scope in scopes)
@@ -59,53 +63,62 @@ namespace AYip.VContainers.Editor
                 {
                     scope.Build();
                 }
-                catch (VContainerParentTypeReferenceNotFound) when(!scope.IsRoot)
+                catch (VContainerParentTypeReferenceNotFound) when (!scope.IsRoot)
                 {
                     if (waitingList.Contains(scope))
                         throw;
-                    
+
                     enqueueAwakeMethod.Invoke(null, new object[] { scope });
                 }
             }
-            
-            // Step 3: Finding any gameObjects that injects dependencies but not registered in the auto-injected list.
-            var autoInjectGameObjectsFieldInfo = lifetimeScopeType.GetField("autoInjectGameObjects", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (autoInjectGameObjectsFieldInfo == null)
-                throw new InvalidRegistrationException("The autoInjectGameObjects field was not found. VContainer might have changed their code.", stopWatch.Elapsed);
 
-            var candidates = monoBehaviours
-                .Where(mb => mb
-                    .GetType()
-                    .GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    .Any(fieldInfo => fieldInfo.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0)
-                )
-                .Select(mb => mb.gameObject)
-                .Distinct();
+            try
+            {
+                // Step 3: Finding any gameObjects that injects dependencies but not registered in the auto-injected list.
+                var autoInjectGameObjectsFieldInfo = lifetimeScopeType.GetField("autoInjectGameObjects",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                if (autoInjectGameObjectsFieldInfo == null)
+                    throw new InvalidRegistrationException(
+                        "The autoInjectGameObjects field was not found. VContainer might have changed their code.",
+                        stopWatch.Elapsed);
+
+                var candidates = monoBehaviours
+                    .Where(mb => mb
+                        .GetType()
+                        .GetMembers(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                        .Any(fieldInfo => fieldInfo.GetCustomAttributes(typeof(InjectAttribute), true).Length > 0)
+                    )
+                    .Select(mb => mb.gameObject)
+                    .Distinct();
+
+                // The list of auto-injected GameObjects on all lifetime scope.
+                var registry = scopes
+                    .SelectMany(scope => autoInjectGameObjectsFieldInfo.GetValue(scope) as List<GameObject>).Distinct();
+
+                var missingGameObjects = candidates
+                    .Where(candidate => !registry
+                        .FirstOrDefault(registeredGameObject =>
+                            // Check if the candidate is on the list
+                            candidate.Equals(registeredGameObject) ||
+
+                            // Or it's not on the list, but it's a child of a registered gameObject
+                            candidate.transform.IsChildOf(registeredGameObject.transform)
+                        )).ToArray();
+
+                if (missingGameObjects.Length > 0)
+                    throw new AutoInjectionGameObjectMissingException(missingGameObjects, stopWatch.Elapsed);
+                
+                stopWatch.Stop();
+                Debug.Log($"VContainer validation completed successfully. ({stopWatch.Elapsed.TotalSeconds} seconds)");
+            }
+            finally
+            {
+                // Step 4: Reset the runtime reference of parent to null.
+                foreach (var scope in scopes)
+                    parentPropertyInfo.SetValue(scope, null);
             
-            // The list of auto-injected GameObjects on all lifetime scope.
-            var registry = scopes.SelectMany(scope => autoInjectGameObjectsFieldInfo.GetValue(scope) as List<GameObject>).Distinct();
-            
-            var missingGameObjects = candidates
-                .Where(candidate => !registry
-                    .FirstOrDefault(registeredGameObject =>
-                        // Check if the candidate is on the list
-                        candidate.Equals(registeredGameObject) ||
-                        
-                        // Or it's not on the list, but it's a child of a registered gameObject
-                        candidate.transform.IsChildOf(registeredGameObject.transform)
-                    )).ToArray();
-            
-            if (missingGameObjects.Length > 0)
-                throw new AutoInjectionGameObjectMissingException(missingGameObjects, stopWatch.Elapsed);   
-            
-            // Step 4: Reset the runtime reference of parent to null.
-            foreach (var scope in scopes)
-                parentPropertyInfo.SetValue(scope, null);
-            
-            waitingListFieldInfo.SetValue(null, null);
-            
-            stopWatch.Stop();
-            Debug.Log($"VContainer validation completed successfully. ({stopWatch.Elapsed.TotalSeconds} seconds)");
+                waitingListFieldInfo.SetValue(null, null);
+            }
         }
         
         /// <summary>
