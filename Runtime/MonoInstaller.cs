@@ -5,6 +5,6 @@ namespace AYip.VContainer
 {
     public abstract class MonoInstaller : MonoBehaviour, IInstaller
     {
-        public abstract void Installer(IContainerBuilder builder);
+        public abstract void Install(IContainerBuilder builder);
     }
 }
