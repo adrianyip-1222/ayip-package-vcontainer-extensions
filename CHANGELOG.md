@@ -1,4 +1,7 @@
 # Changelog
+## 0.2.1
+- Fixed incorrect install method name.
+
 ## 0.2.0
 - Added installers for installing contracts by different concerns in different ways
 
