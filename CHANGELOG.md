@@ -1,4 +1,7 @@
 # Changelog
+## 0.2.0
+- Added installers for installing contracts by different concerns in different ways
+
 ## 0.1.4
 - Prevent validation from running in play mode
 - Fixed validation not working when it has thrown exceptions during validation or the waiting list has been null.
