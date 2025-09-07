@@ -1,4 +1,7 @@
 # Changelog
+## 1.0.0
+- Use new namespace of AYip.Foundation
+
 ## 0.2.1
 - Fixed incorrect install method name.
 
