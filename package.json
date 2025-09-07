@@ -1,25 +1,28 @@
 {
-  "name": "com.adrianyip.vcontainer.extensions",
-  "version": "0.2.1",
-  "displayName": "AYip VContainer Extensions",
-  "description": "This is a simple extension package for VContainer",
-  "unity": "2019.1",
-  "documentationUrl": "https://github.com/adrianyip-1222/ayip-package-vcontainer-extensions",
-  "changelogUrl": "https://github.com/adrianyip-1222/ayip-package-vcontainer-extensions/blob/0.2.1/CHANGELOG.md",
-  "licensesUrl": "https://github.com/adrianyip-1222/ayip-package-vcontainer-extensions/blob/0.2.1/LICENSE",
-  "dependencies": {
-    "com.adrianyip.foundation": "0.2.2",
-    "jp.hadashikick.vcontainer": "1.16.8"
-  },
-  "keywords": [
-    "dependency",
-    "injection",
-    "di",
-    "inject"
-  ],
-  "author": {
-    "name": "Yip Ka Ming",
-    "email": "adrianyip1222@gmail.com",
-    "url": "https://github.com/adrianyip-1222"
-  }
+    "name": "com.adrianyip.vcontainer.extensions",
+    "version": "1.0.0",
+    "displayName": "AYip VContainer Extensions",
+    "description": "This is a simple extension package for VContainer",
+    "unity": "2019.1",
+    "documentationUrl": "https://github.com/adrianyip-1222/ayip-package-vcontainer-extensions",
+    "changelogUrl": "https://github.com/adrianyip-1222/ayip-package-vcontainer-extensions/blob/1.0.0/CHANGELOG.md",
+    "licensesUrl": "https://github.com/adrianyip-1222/ayip-package-vcontainer-extensions/blob/1.0.0/LICENSE",
+    "dependencies":
+    {
+        "com.adrianyip.foundation": "1.0.0",
+        "jp.hadashikick.vcontainer": "1.16.8"
+    },
+    "keywords":
+    [
+        "dependency",
+        "injection",
+        "di",
+        "inject"
+    ],
+    "author":
+    {
+        "name": "Yip Ka Ming",
+        "email": "adrianyip1222@gmail.com",
+        "url": "https://github.com/adrianyip-1222"
+    }
 }
